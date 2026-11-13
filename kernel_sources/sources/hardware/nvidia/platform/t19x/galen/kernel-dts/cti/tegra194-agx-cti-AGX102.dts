@@ -1,0 +1,273 @@
+/*
+ * Top level DTS file for AGX102.
+ */
+#include "tegra194-agx-cti-base.dtsi"
+
+/{
+    nvidia,dtsfilename = "tegra194-agx-cti-AGX102.dts";
+	
+	fixed-regulators {
+		p2822_vdd_1v8_sd: regulator@104 {
+			/delete-property/ gpio;
+			/delete-property/ enable-active-high;
+		};
+		
+		p2822_vdd_sdmmc1_sw: regulator@106 {
+			/delete-property/ gpio;
+			/delete-property/ enable-active-high;
+		};
+		
+		p2822_vdd_hdmi_5v0: regulator@112 {
+			/delete-property/ gpio;
+			/delete-property/ enable-active-high;
+		};
+		
+		p2822_vdd_sys_en: regulator@113 {
+			/delete-property/ gpio;
+			/delete-property/ enable-active-high;
+		};
+        
+        /*vdd_usb_vbus0: regulator@114 {
+            regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+        };*/
+		
+		p2822_vdd_3v3_pcie: regulator@115 {
+			/delete-property/ gpio;
+			/delete-property/ enable-active-high;
+		};
+	};
+
+
+   xusb_padctl: xusb_padctl@3520000 {
+        status = "okay";
+
+        pads {
+            usb2 {
+                lanes {
+                    usb2-0 {
+                        status = "okay";
+                        vbus-supply = <&vdd_usb_vbus0>;
+                    };
+                    usb2-1 {
+                        status = "okay";
+                    };
+                    usb2-2 {
+                        status = "okay";
+                    };
+                    usb2-3 {
+                        status = "okay";
+                    };
+                };
+            };
+            usb3 {
+                lanes {
+                    usb3-0 {
+                        status = "okay";
+                    };
+                    usb3-1 {
+                        status = "disabled";
+                    };
+                    usb3-2 {
+                        status = "okay";
+                    };
+                    usb3-3 {
+                        status = "okay";
+                    };
+                };
+            };
+        };
+       ports {
+            usb2-0 {
+                status = "okay";
+                mode = "otg";
+                vbus-supply = <&vdd_usb_vbus0>;
+                usb-role-switch;
+				connector {
+					compatible = "usb-b-connector", "gpio-usb-b-connector";
+		            label = "micro-USB";
+                    type = "micro";
+                    vbus-gpios = <&tegra_aon_gpio TEGRA194_AON_GPIO(BB, 2) GPIO_ACTIVE_HIGH>;
+					id-gpios = <&tegra_main_gpio TEGRA194_MAIN_GPIO(Q, 0) GPIO_ACTIVE_HIGH>;
+				};
+            };
+            usb2-1 {
+                status = "okay";
+            };
+            usb2-2 {
+                status = "okay";
+            };
+            usb2-3 {
+                status = "okay";
+            };
+            usb3-0 {
+                nvidia,usb2-companion = <2>;
+            //    nvidia,usb3-gen1-only= <1>;
+                status = "okay";
+            };
+            usb3-1{
+            //    nvidia,usb2-companion = <1>;
+            //    nvidia,usb3-gen1-only= <1>;
+                status = "disabled";
+            };
+            usb3-2 {
+                nvidia,usb2-companion = <1>;
+            //    nvidia,usb3-gen1-only= <1>;
+                status = "okay";
+            };
+            usb3-3 {
+                nvidia,usb2-companion = <0>;
+            //    nvidia,usb3-gen1-only= <1>;
+                status = "okay";
+            };
+        };
+    };
+
+    //remove unused phys from here
+   tegra_xhci: xhci@3610000 {
+
+        phys = <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-0}>,
+            <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-1}>,
+            <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-2}>,
+            <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-3}>,
+            <&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-0}>,
+            <&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-2}>,
+            <&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-3}>;
+        phy-names = "usb2-0", "usb2-1", "usb2-2", "usb2-3",
+            "usb3-0", "usb3-2", "usb3-3";
+        nvidia,xusb-padctl = <&xusb_padctl>;
+    };
+
+    xudc@3550000 {
+        phys = <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-0}>,
+            <&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-3}>;
+        phy-names = "usb2-0", "usb3-3";
+        nvidia,xusb-padctl = <&xusb_padctl>;
+        status = "okay";
+    };
+
+    pcie@14100000 {
+        status = "okay";
+
+        phys = <&p2u_hsio_0>;
+        phy-names = "p2u-0";
+    };
+
+    pcie@14140000 {
+        status = "okay";
+
+        phys = <&p2u_hsio_7>;
+        phy-names = "p2u-0";
+    };
+
+    pcie@14180000 {
+        status = "okay";
+		num-lanes = <4>;
+    };
+
+
+    pcie@141a0000 {
+        status = "okay";
+		num-lanes = <4>;
+        phys = <&p2u_nvhs_0>, <&p2u_nvhs_1>, <&p2u_nvhs_2>,
+               <&p2u_nvhs_3>;
+
+        phy-names = "p2u-0", "p2u-1", "p2u-2", "p2u-3";
+    };
+
+    pcie_ep@141a0000 {
+        status = "disabled";
+
+    };
+
+    ahci-sata@3507000 {
+
+        status = "disabled";
+
+    };
+
+    ethernet@2490000 {
+        mdio {
+            phy@0 {
+                /delete-property/ marvell,copper-mode;
+            };
+        };
+
+    };
+
+    gpio@2200000 {
+
+        wlan-on-gpio{
+            gpio-hog;
+            output-high;
+            gpios = <TEGRA194_MAIN_GPIO(G, 3) GPIO_ACTIVE_HIGH>;
+            label = "wlan-on-gpio";
+            status = "okay";
+        };
+
+        bt-on-gpio{
+            gpio-hog;
+            output-high;
+            gpios = <TEGRA194_MAIN_GPIO(M, 7) GPIO_ACTIVE_HIGH>;
+            label = "bt-on-gpio";
+            status = "okay";
+        };
+    };
+    
+    serial@3110000{
+		status = "okay";
+	};
+
+    serial@3140000{
+        status = "okay";
+    };
+    
+    mttcan@c310000{
+		status = "okay";
+	};
+	
+	mttcan@c320000{
+		status = "okay";
+	};
+
+};
+
+//sor0
+&head1 {
+    status = "okay";
+};
+
+//sor1
+&head2 {
+    status = "okay";
+};
+
+&sor0 {
+    status = "okay";
+    nvidia,active-panel = <&sor0_hdmi_display>;
+};
+
+&sor0_hdmi_display {
+    status = "okay";
+};
+
+&dpaux0 {
+    status = "okay";
+};
+
+&sor1 {
+    status = "okay";
+    nvidia,active-panel = <&sor1_hdmi_display>;
+};
+
+&sor1_hdmi_display {
+    status = "okay";
+};
+
+&dpaux1 {
+    status = "okay";
+};
+
+&tegra_cec {
+    status = "okay";
+};

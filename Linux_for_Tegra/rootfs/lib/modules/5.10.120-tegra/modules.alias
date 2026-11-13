@@ -1,0 +1,4 @@
+# Aliases extracted from modules themselves.
+alias of:N*T*Cnvidia,ox08b40C* ecam_gmsl_yuv_common
+alias of:N*T*Cnvidia,ox08b40 ecam_gmsl_yuv_common
+alias i2c:ox08b40 ecam_gmsl_yuv_common

@@ -1,0 +1,15 @@
+
+if TYPEC
+
+config TYPEC_CTI_PTN5150
+    tristate "CTI NXP PTN5150 USB-C Controller Driver"
+    depends on USB_ROLE_SWITCH
+    depends on I2C
+    select REGMAP_I2C
+    help
+        NXP PTN5150 USB-C Controller Driver. Support Linux's typec interface
+
+        If you choose to build this driver as a dynamically linked module, the
+        module will be called cti-pnt5150.ko. 
+
+endif

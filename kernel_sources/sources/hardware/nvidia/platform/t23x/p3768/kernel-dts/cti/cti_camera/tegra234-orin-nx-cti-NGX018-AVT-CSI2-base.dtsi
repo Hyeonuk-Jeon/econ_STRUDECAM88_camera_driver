@@ -1,0 +1,367 @@
+/*
+ * Copyright (c) 2022, Connect Tech Inc.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "dt-bindings/clock/tegra234-clock.h"
+
+#define CAMERA_I2C_MUX_BUS(x) (0x1E + x)
+#define RST_IO_EXP TEGRA234_MAIN_GPIO(AC,1)
+#define PWM_CALIB_GPIO TEGRA234_MAIN_GPIO(H,7) //CAM0_PWDN
+#define TRIGGER_SEL TEGRA234_MAIN_GPIO(I,0) //CAM0_RST
+#define PWR_EN      TEGRA234_MAIN_GPIO(AC, 7)
+
+#define I2C0_LANEPOLARITY "6"
+
+//default
+#define PIX_CLK_HZ        "750000000"
+//#define PIX_CLK_HZ        "900000000"
+//#define PIX_CLK_HZ        "248000000"
+//#define SERDES_PIX_CLK_HZ "250000000"
+#define PIX_BIT_DEPTH "4" //OG value
+
+#define AVT_MODE_0 \
+    discontinuous_clk = "no";  \
+    cil_settletime = "0"; \
+    embedded_metadata_height = "0"; \
+    mclk_khz = "24000"; \
+    phy_mode = "DPHY"; \
+    dpcm_enable = "false"; \
+    csi_pixel_bit_depth = PIX_BIT_DEPTH; \
+    active_w = "5488"; \
+    active_h = "4112"; \
+    pixel_t = "bayer_bggr"; \
+    readout_orientation = "0"; \
+    line_length = "5488"; \
+    inherent_gain = "1"; \
+    mclk_multiplier = "31.25"; \
+    pix_clk_hz = PIX_CLK_HZ; \
+    gain_factor = "16"; \
+    framerate_factor = "1000000"; \
+    exposure_factor = "1000000"; \
+    min_gain_val = "16"; \
+    max_gain_val = "256"; \
+    step_gain_val = "1"; \
+    min_hdr_ratio = "1"; \
+    max_hdr_ratio = "64"; \
+    min_framerate = "1500000"; \
+    max_framerate = "30000000"; \
+    step_framerate = "1"; \
+    min_exp_time = "34"; \
+    max_exp_time = "550385"; \
+    step_exp_time = "1";
+
+
+
+#define AVT_NODE_COMMON \
+    status = "okay"; \
+    clocks = <&bpmp_clks TEGRA234_CLK_EXTPERIPH1>, \
+             <&bpmp_clks TEGRA234_CLK_PLLP_OUT0>; \
+    clock-names = "extperiph1", "pllp_grtba"; \
+    mclk = "extperiph1"; \
+    compatible = "alliedvision,avt_csi2";
+
+#define SERDES_STATE "okay"                                       
+
+
+/ {
+
+	gpio@2200000 {
+		camera-control-output-high {
+			status = "okay";
+			gpio-hog;
+			gpios = <RST_IO_EXP 0>;
+			output-high;
+			label = "rst-io-expender"; 
+		};
+		camera-control-output-low {
+			status = "okay";
+			gpio-hog;
+			gpios = <TRIGGER_SEL 0>;
+			output-low;
+			label = "trigger_sel";
+		};
+	};
+
+    i2c@3180000 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+		max9296_0: cti_max9296@48 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "cti,max929x";
+			reg = <0x48>;
+			status = "okay";
+			cti,csi-freq-mhz = <1500>;
+			cti,lane-mode = <1>;
+			cti,always-on;
+			i2c@0 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0>;
+				i2c-mux,deselect-on-exit; 
+				force_bus_start = <50>;
+				avt_csi2_a@32 {
+					AVT_NODE_COMMON
+					devnode = "video0";
+					reg = <0x32>;
+					csi_clk_freq = <650000000>;
+					csi_lanes = "4";
+	
+					mode0 {
+						num_lanes = "4";
+						vc_id = "0";
+						lane_polarity = I2C0_LANEPOLARITY;
+						tegra_sinterface = "serial_a";
+						AVT_MODE_0
+				    };
+	
+				    ports{
+						#address-cells = <1>;
+						#size-cells = <0>;
+						port@0 {
+						    reg = <0>;
+							avt_csi2_cam_out0: endpoint {
+								port-index = <0>;
+								bus-width = <4>;
+								vc-id = <0>;
+								remote-endpoint = <&avt_csi2_csi_in0>;
+							};
+						};
+				    };
+				};
+				avt_csi2_b@33 {
+					AVT_NODE_COMMON
+					devnode = "video1";
+					reg = <0x33>;
+					csi_clk_freq = <650000000>;
+					csi_lanes = "4";
+					mode0 {
+					    num_lanes = "4";
+					    vc_id = "1";
+						lane_polarity = I2C0_LANEPOLARITY;
+					    tegra_sinterface = "serial_a";
+					    AVT_MODE_0
+					};
+		
+					ports{
+					    #address-cells = <1>;
+					    #size-cells = <0>;
+					    port@0 {
+							reg = <0>;
+							avt_csi2_cam_out1: endpoint {
+							    port-index = <0>;
+							    bus-width = <4>;
+							    vc-id = <1>;
+							    remote-endpoint = <&avt_csi2_csi_in1>;
+							};
+					    };
+					};
+				};  			
+			};
+			cti_max96717_A {
+				reg = <0x40>;
+				cti,def-addr = <0x40>;
+				cti,lane-mode = <1>; //was 5
+				cti,vc-id = <0>;
+				cti,i2c-map = <0x32 0x3c>;
+				cti,tx-pipe = <2>;
+				cti,pipes-dt = <0x0 0x0 0x24 0x0>;
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					port@0 {
+						reg = <0>;
+						cti_max9295_a0_in: endpoint {
+							//remote-endpoint = <&cam_out0>;
+						};
+					};
+					port@1 {
+						reg = <1>;
+						cti_max9295_a0_out: endpoint {
+							//remote-endpoint = <&avt_csi2_csi_in0>;
+						};
+					};
+				};
+			};
+			cti_max96717_B {
+				reg = <0x62>; //force to 62
+				cti,def-addr = <0x40>;
+				cti,lane-mode = <1>;
+				cti,vc-id = <1>;
+				cti,i2c-map = <0x33 0x3c>;
+				cti,pipes-dt = <0x24 0 0 0>;
+				cti,tx-pipe = <0>;
+				ports {
+				    #address-cells = <1>;
+				    #size-cells = <0>;
+				    port@0 {
+						reg = <0>;
+						cti_max9295_b0_in: endpoint {
+							//remote-endpoint = <&cam_out1>;
+						};
+				    };
+				    port@1 {
+						reg = <1>;
+						cti_max9295_b0_out: endpoint {
+							//remote-endpoint = <&avt_csi2_csi_in1>;
+						};
+				    };
+				};
+			};
+		};		
+	};
+
+
+    
+
+    tegra-capture-vi {
+		num-channels = <2>;
+        status="okay";
+        ports {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            port@0 {
+                reg = <0>;
+                status="okay";
+                avt_csi2_vi_in0: endpoint {
+                    status="okay";
+                    port-index = <0>;
+                    bus-width = <4>;
+					vc-id = <0>;
+                    remote-endpoint = <&avt_csi2_csi_out0>;
+                };
+            };
+            port@1 {
+                reg = <1>;
+                status="okay";
+                avt_csi2_vi_in1: endpoint {
+					status="okay";
+                    port-index = <0>;
+                    bus-width = <4>;
+					vc-id = <1>;
+                    remote-endpoint = <&avt_csi2_csi_out1>;
+                };
+            };
+		};
+	};
+
+        host1x@13e00000 {
+          status = "okay";
+         nvcsi@15a00000 {
+            num-channels = <2>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status="okay";
+
+            channel@0 {
+                status="okay";
+                reg = <0>;
+                ports {
+                    status="okay";
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+                    port@0 {
+                        reg = <0>;
+                        status="okay";
+                        avt_csi2_csi_in0: endpoint@0 {
+                            status="okay";
+                            port-index = <0>;
+                            bus-width = <4>;
+                            remote-endpoint = <&avt_csi2_cam_out0>;
+                        };
+                    };
+                    port@1 {
+                        status="okay";
+                        reg = <1>;
+                        avt_csi2_csi_out0: endpoint@1 {
+                            status="okay";
+                            remote-endpoint = <&avt_csi2_vi_in0>;
+                        };
+                    };
+                };
+            };
+            channel@1 {
+                status="okay";
+                reg = <1>;
+                ports {
+                    status="okay";
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+                    port@0 {
+                        reg = <0>;
+                        status="okay";
+                        avt_csi2_csi_in1: endpoint@2 {
+                            status="okay";
+                            port-index = <0>;
+                            bus-width = <4>;
+                            remote-endpoint = <&avt_csi2_cam_out1>;
+                        };
+                    };
+                    port@1 {
+                        status="okay";
+                        reg = <1>;
+                        avt_csi2_csi_out1: endpoint@3 {
+                            status="okay";
+                            remote-endpoint = <&avt_csi2_vi_in1>;
+                        };
+                    };
+                };
+            };
+        };
+    };
+
+                        
+    tegra-camera-platform {
+        num_csi_lanes = <4>;
+        max_lane_speed = <4000000>;
+        min_bits_per_pixel = <8>;
+        vi_peak_byte_per_pixel = <1>;
+        vi_bw_margin_pct = <25>;
+		max_pixel_rate = <240000>;
+        isp_peak_byte_per_pixel = <5>;
+        isp_bw_margin_pct = <25>;
+		compatible = "nvidia, tegra-camera-platform";
+		status = "okay";
+        
+		modules {
+			status = "okay";
+			module0 {
+				status = "okay";
+            	pcl_id = "v4l2_sensor";
+            	devname = "avt_csi2 0 40-0032";
+            	orientation = "1";
+				drivernode0 {
+					status = "okay";
+					pcl_id = "v4l2_sensor";
+					devname = "avt_csi2 0 40-0032";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/cti_max9296@48/avt_csi2_a@32/cti_max96717_A";
+				};
+			};
+			module1 {
+				status = "okay";
+				badge = "avt_csi2_center";
+				position = "center";
+				orientation = "1";
+				drivernode0 {
+					status = "okay";
+					pcl_id = "v4l2_sensor";
+					devname = "avt_csi2 1 40-0033";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/cti_max9296@48/avt_csi2_b@33/cti_max96717_B";
+				};
+			};
+        };
+    };
+};

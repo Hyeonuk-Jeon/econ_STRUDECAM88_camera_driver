@@ -1,0 +1,8 @@
+/dts-v1/;
+#include "tegra234-orin-nano-cti-NGX022.dts"
+#include "../cti_camera/tegra234-orin-nx-cti-NGX022-ECON-NEDUCAM25-base.dtsi"
+
+/ {
+	nvidia,dtsfilename = "tegra234-orin-nano-cti-NGX022-ECON-NEDUCAM25-4CAM.dts";
+	nvidia,dtbbuildtime = __DATE__, __TIME__;
+};

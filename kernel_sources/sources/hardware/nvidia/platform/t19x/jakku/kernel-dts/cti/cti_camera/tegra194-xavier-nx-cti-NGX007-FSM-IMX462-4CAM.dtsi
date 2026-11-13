@@ -1,0 +1,219 @@
+/*
+ * tegra194-camera-imx462.dtsi - imx462 sensor device tree
+ *
+ * Copyright (c) 2019. FRAMOS.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "tegra194-cti-camera-fsm-imx462-4cam-1mux-1sensor-header.dtsi"
+#include "tegra194-cti-fsm-imx462-modes-header.dtsi"
+#include "tegra194-cti-camera-4cam-1mux-1sensor-base.dtsi"
+#include "tegra194-xavier-nx-cti-NGX007-FSM-4CAM-base.dtsi"
+
+/ {
+	tegra-camera-platform {
+		compatible = "nvidia, tegra-camera-platform";
+		num_csi_lanes = <12>;
+		max_lane_speed = <1500000>;
+		min_bits_per_pixel = <10>;
+		vi_peak_byte_per_pixel = <2>;
+		vi_bw_margin_pct = <25>;
+		max_pixel_rate = <240000>;
+		isp_peak_byte_per_pixel = <5>;
+		isp_bw_margin_pct = <25>;
+	};
+};
+
+/{
+	i2c@3180000 {
+		tca9548@70 {
+			i2c@0 {
+				imx462_a@1a {
+					devnode = "video0";
+					reset-gpios = <&gpio_i2c_cam 0 GPIO_ACTIVE_HIGH>;
+					SENSOR_COMMON
+					mode0 {
+						tegra_sinterface = I2C0_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE0_2LANE
+					};
+					mode1 {
+						tegra_sinterface = I2C0_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE1_2LANE
+					};
+					mode2 {
+						tegra_sinterface = I2C0_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE2_2LANE
+					};
+					mode3 {
+						tegra_sinterface = I2C0_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE3_2LANE
+					};
+					mode4 {
+						tegra_sinterface = I2C0_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE4_2LANE
+					};
+					mode5 {
+						tegra_sinterface = I2C0_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE5_2LANE
+					};
+				};
+			};
+
+			i2c@1 {
+				imx462_c@1a {
+					devnode = "video1";
+					SENSOR_COMMON
+					reset-gpios = <&gpio_i2c_cam 2 GPIO_ACTIVE_HIGH>;
+					mode0 {
+						tegra_sinterface = I2C1_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE0_2LANE
+					};
+					mode1 {
+						tegra_sinterface = I2C1_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE1_2LANE
+					};
+					mode2 {
+						tegra_sinterface = I2C1_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE2_2LANE
+					};
+					mode3 {
+						tegra_sinterface = I2C1_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE3_2LANE
+					};
+					mode4 {
+						tegra_sinterface = I2C1_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE4_2LANE
+					};
+					mode5 {
+						tegra_sinterface = I2C1_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE5_2LANE
+					};
+				};
+			};
+
+			i2c@2 {
+				imx462_d@1a {
+					devnode = "video2";
+					reset-gpios = <&gpio_i2c_cam 4 GPIO_ACTIVE_HIGH>;
+					SENSOR_COMMON
+					mode0 {
+						tegra_sinterface = I2C2_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ2;
+						vc_id = "0";
+						SENSOR_MODE0_2LANE
+					};
+					mode1 {
+						tegra_sinterface = I2C2_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ2;
+						vc_id = "0";
+						SENSOR_MODE1_2LANE
+					};
+					mode2 {
+						tegra_sinterface = I2C2_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ2;
+						vc_id = "0";
+						SENSOR_MODE2_2LANE
+					};
+					mode3 {
+						tegra_sinterface = I2C2_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ2;
+						vc_id = "0";
+						SENSOR_MODE3_2LANE
+					};
+					mode4 {
+						tegra_sinterface = I2C2_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ2;
+						vc_id = "0";
+						SENSOR_MODE4_2LANE
+					};
+					mode5 {
+						tegra_sinterface = I2C2_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ2;
+						vc_id = "0";
+						SENSOR_MODE5_2LANE
+					};
+				};
+			};
+
+			i2c@3 {
+				imx462_e@1a {
+					devnode = "video3";
+					reset-gpios = <&gpio_i2c_cam 7 GPIO_ACTIVE_HIGH>;
+					SENSOR_COMMON
+					mode0 {
+						tegra_sinterface = I2C3_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE0_2LANE
+					};
+					mode1 {
+						tegra_sinterface = I2C3_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE1_2LANE
+					};
+					mode2 {
+						tegra_sinterface = I2C3_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE2_2LANE
+					};
+					mode3 {
+						tegra_sinterface = I2C3_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE3_2LANE
+					};
+					mode4 {
+						tegra_sinterface = I2C3_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE4_2LANE
+					};
+					mode5 {
+						tegra_sinterface = I2C3_NODE0_SINTERFACE;
+						pix_clk_hz = PIX_CLK_HZ1;
+						vc_id = "0";
+						SENSOR_MODE5_2LANE
+					};
+				};
+			};
+		};
+	};
+};

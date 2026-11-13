@@ -1,0 +1,436 @@
+#include "dt-bindings/clock/tegra194-clock.h"
+
+/ {
+
+	//I2C_3
+	i2c@3180000 {
+		jcb003_a@40 {
+			
+			/* Define any required hw resources needed by driver */
+			/* ie. clocks, io pins, power sources */
+			clocks = <&bpmp_clks TEGRA194_CLK_EXTPERIPH1>,
+					 <&bpmp_clks TEGRA194_CLK_EXTPERIPH1>;
+			clock-names = "extperiph1", "pllp_grtba";
+			mclk = "extperiph1";
+
+			compatible = "cti,jcb003";
+
+			reg = <0x40>;
+
+			/* Physical dimensions of sensor */
+			physical_w = "15.0";
+			physical_h = "12.5";
+
+			sensor_model = "jcb003";
+
+			/* Defines number of frames to be dropped by driver internally after applying */
+			/* sensor crop settings. Some sensors send corrupt frames after applying */
+			/* crop co-ordinates */
+			post_crop_frame_drop = "0";
+
+			/* Convert Gain to unit of dB (decibel) befor passing to kernel driver */
+			use_decibel_gain = "true";
+
+			//CTI_JCB003_MODE_1280X720
+			mode0 {
+				mclk_khz = "200000";
+				num_lanes = "4";
+				tegra_sinterface = "serial_a";
+
+				discontinuous_clk = "no";
+				dpcm_enable = "false";
+				cil_settletime = "0";
+				dynamic_pixel_bit_depth = "16";
+				csi_pixel_bit_depth = "16";
+				mode_type = "yuv";
+				pixel_phase = "uyvy";
+
+				active_w = "1280";
+				active_h = "720";
+				readout_orientation = "0";
+
+				line_length = "1280";
+
+				pix_clk_hz = "110592000";
+
+				framerate_factor = "1000000";
+				min_framerate = "60000000";
+				max_framerate = "60000000";
+				default_framerate = "60000000";
+				step_framerate = "1";
+
+				//Unused but required
+				//serdes_pix_clk_hz = "833333333";
+				inherent_gain = "1";
+				gain_factor = "10";
+				min_gain_val = "0"; /* dB */
+				max_gain_val = "300"; /* dB */
+				step_gain_val = "3"; /* 0.3 */
+				default_gain = "0";
+				min_hdr_ratio = "1";
+				max_hdr_ratio = "1";
+
+				exposure_factor = "1000000";
+				min_exp_time = "100"; 
+				max_exp_time = "1000";
+				step_exp_time = "1";
+				default_exp_time = "100";
+				embedded_metadata_height = "0";
+
+			};
+
+			//CTI_JCB003_MODE_1920X1080
+			mode1 {
+				mclk_khz = "200000";
+				num_lanes = "4";
+				tegra_sinterface = "serial_a";
+
+				discontinuous_clk = "no";
+				dpcm_enable = "false";
+				cil_settletime = "0";
+
+				dynamic_pixel_bit_depth = "16";
+				csi_pixel_bit_depth = "16";
+				mode_type = "yuv";
+				pixel_phase = "uyvy";
+
+				active_w = "1920";
+				active_h = "1080";
+				readout_orientation = "0";
+
+				line_length = "1920";
+
+				//NOTE: 2x normal because 2 bytes per pixel
+				pix_clk_hz = "248832000";
+
+				framerate_factor = "1000000";
+				min_framerate = "60000000";
+				max_framerate = "60000000";
+				default_framerate = "60000000";
+				step_framerate = "1";
+
+				//Unused but required
+				//serdes_pix_clk_hz = "833333333";
+				inherent_gain = "1";
+				gain_factor = "10";
+				min_gain_val = "0"; /* dB */
+				max_gain_val = "300"; /* dB */
+				step_gain_val = "3"; /* 0.3 */
+				default_gain = "0";
+				min_hdr_ratio = "1";
+				max_hdr_ratio = "1";
+
+				exposure_factor = "1000000";
+				min_exp_time = "100"; 
+				max_exp_time = "1000";
+				step_exp_time = "1";
+				default_exp_time = "100";
+				embedded_metadata_height = "0";
+			};
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					jcb003_out0: endpoint {
+						port-index = <0>;
+						bus-width = <4>;
+						remote-endpoint = <&csi_in0>;
+					};
+				};
+			};
+		};
+	};
+
+	//I2C_4
+	i2c@c250000 {
+		jcb003_b@10 {
+			
+			/* Define any required hw resources needed by driver */
+			/* ie. clocks, io pins, power sources */
+			clocks = <&bpmp_clks TEGRA194_CLK_EXTPERIPH1>,
+					 <&bpmp_clks TEGRA194_CLK_EXTPERIPH1>;
+			clock-names = "extperiph1", "pllp_grtba";
+			mclk = "extperiph1";
+
+			compatible = "cti,jcb003";
+
+			reg = <0x41>;
+
+			/* Physical dimensions of sensor */
+			physical_w = "15.0";
+			physical_h = "12.5";
+
+			sensor_model = "jcb003";
+
+			/* Defines number of frames to be dropped by driver internally after applying */
+			/* sensor crop settings. Some sensors send corrupt frames after applying */
+			/* crop co-ordinates */
+			post_crop_frame_drop = "0";
+
+			/* Convert Gain to unit of dB (decibel) befor passing to kernel driver */
+			use_decibel_gain = "true";
+
+			//CTI_JCB003_MODE_1280X720
+			mode0 {
+				mclk_khz = "200000";
+				num_lanes = "4";
+				tegra_sinterface = "serial_c";
+
+				discontinuous_clk = "no";
+				dpcm_enable = "false";
+				cil_settletime = "0";
+
+				dynamic_pixel_bit_depth = "16";
+				csi_pixel_bit_depth = "16";
+				mode_type = "yuv";
+				pixel_phase = "uyvy";
+
+				active_w = "1280";
+				active_h = "720";
+				readout_orientation = "0";
+
+				line_length = "1280";
+
+				pix_clk_hz = "110592000";
+
+				framerate_factor = "1000000";
+				min_framerate = "60000000";
+				max_framerate = "60000000";
+				default_framerate = "60000000";
+				step_framerate = "1";
+
+				//Unused but required
+				//serdes_pix_clk_hz = "833333333";
+				inherent_gain = "1";
+				gain_factor = "10";
+				min_gain_val = "0"; /* dB */
+				max_gain_val = "300"; /* dB */
+				step_gain_val = "3"; /* 0.3 */
+				default_gain = "0";
+				min_hdr_ratio = "1";
+				max_hdr_ratio = "1";
+
+				exposure_factor = "1000000";
+				min_exp_time = "100"; 
+				max_exp_time = "1000";
+				step_exp_time = "1";
+				default_exp_time = "100";
+				embedded_metadata_height = "0";
+			};
+
+			//CTI_JCB003_MODE_1920X1080
+			mode1 {
+				mclk_khz = "200000";
+				num_lanes = "4";
+				tegra_sinterface = "serial_c";
+
+				discontinuous_clk = "no";
+				dpcm_enable = "false";
+				cil_settletime = "0";
+				dynamic_pixel_bit_depth = "16";
+				csi_pixel_bit_depth = "16";
+				mode_type = "yuv";
+				pixel_phase = "uyvy";
+
+				active_w = "1920";
+				active_h = "1080";
+				readout_orientation = "0";
+
+				line_length = "1920";
+
+				//NOTE: 2x normal because 2 bytes per pixel
+				pix_clk_hz = "248832000";
+				
+				framerate_factor = "1000000";
+				min_framerate = "60000000";
+				max_framerate = "60000000";
+				default_framerate = "60000000";
+				step_framerate = "1";
+
+				//Unused but required
+				//serdes_pix_clk_hz = "833333333";
+				inherent_gain = "1";
+				gain_factor = "10";
+				min_gain_val = "0"; /* dB */
+				max_gain_val = "300"; /* dB */
+				step_gain_val = "3"; /* 0.3 */
+				default_gain = "0";
+				min_hdr_ratio = "1";
+				max_hdr_ratio = "1";
+
+				exposure_factor = "1000000";
+				min_exp_time = "100"; 
+				max_exp_time = "1000";
+				step_exp_time = "1";
+				default_exp_time = "100";
+				embedded_metadata_height = "0";
+			};
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					jcb003_out1: endpoint {
+						port-index = <2>;
+						bus-width = <4>;
+						remote-endpoint = <&csi_in1>;
+					};
+				};
+			};
+		};
+	};
+
+	tegra-capture-vi {
+		num-channels = <2>;
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			port@0 {
+				reg = <0>;
+				vi_in0: endpoint {
+					port-index = <0>;
+					bus-width = <4>;
+					remote-endpoint = <&csi_out0>;
+				};
+			};
+			port@1 {
+				reg = <1>;
+				vi_in1: endpoint {
+					port-index = <2>;
+					bus-width = <4>;
+					remote-endpoint = <&csi_out1>;
+				};
+			};
+		};
+	};
+	
+	host1x@13e00000 {
+		nvcsi@15a00000 {
+			num-channels = <2>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			channel@0 {
+				reg = <0>;
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					port@0 {
+						reg = <0>;
+						csi_in0: endpoint@0 {
+							port-index = <0>;
+							bus-width = <4>;
+							remote-endpoint = <&jcb003_out0>;
+						};
+					};
+					port@1 {
+						reg = <1>;
+						csi_out0: endpoint@1 {
+							remote-endpoint = <&vi_in0>;
+						};
+					};
+				};
+			};
+			channel@1 {
+				reg = <1>;
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					port@0 {
+						reg = <0>;
+						csi_in1: endpoint@2 {
+							port-index = <2>;
+							bus-width = <4>;
+							remote-endpoint = <&jcb003_out1>;
+						};
+					};
+					port@1 {
+						reg = <1>;
+						csi_out1: endpoint@11 {
+							remote-endpoint = <&vi_in1>;
+						};
+					};
+				};
+			};
+		};
+	};
+
+	tegra-camera-platform {
+		compatible = "nvidia, tegra-camera-platform";
+		/**
+		* Physical settings to calculate max ISO BW
+		*
+		* num_csi_lanes = <>;
+		* Total number of CSI lanes when all cameras are active
+		*
+		* max_lane_speed = <>;
+		* Max lane speed in Kbit/s
+		*
+		* min_bits_per_pixel = <>;
+		* Min bits per pixel
+		*
+		* vi_peak_byte_per_pixel = <>;
+		* Max byte per pixel for the VI ISO case
+		*
+		* vi_bw_margin_pct = <>;
+		* Vi bandwidth margin in percentage
+		*
+		* max_pixel_rate = <>;
+		* Max pixel rate in Kpixel/s for the ISP ISO case
+		*
+		* isp_peak_byte_per_pixel = <>;
+		* Max byte per pixel for the ISP ISO case
+		*
+		* isp_bw_margin_pct = <>;
+		* Isp bandwidth margin in percentage
+		*/
+		num_csi_lanes = <8>;
+		max_lane_speed = <800000>;
+		min_bits_per_pixel = <16>;
+		vi_peak_byte_per_pixel = <2>;
+		vi_bw_margin_pct = <25>;
+		isp_peak_byte_per_pixel = <2>;
+		isp_bw_margin_pct = <25>;
+		//max_pixel_rate = <240000>;
+		//tpg_max_iso = <3916800>;
+
+		/**
+		 * The general guideline for naming badge_info contains 3 parts, and is as follows,
+		 * The first part is the camera_board_id for the module; if the module is in a FFD
+		 * platform, then use the platform name for this part.
+		 * The second part contains the position of the module, ex. "rear" or "front".
+		 * The third part contains the last 6 characters of a part number which is found
+		 * in the module's specsheet from the vender.
+		 */
+		modules {
+			module0 {
+				badge = "cti_front_jcb003";
+				position = "front";
+				orientation = "0";
+				drivernode0 {
+					/* Declare PCL support driver (classically known as guid)  */
+					pcl_id = "v4l2_sensor";
+					/* Driver v4l2 device name */
+					devname = "jcb003 2-0040";
+					/* Declare the device-tree hierarchy to driver instance */
+					proc-device-tree = "/proc/device-tree/i2c@3180000/jcb003_a@40";
+				};
+			};
+			module1 {
+				badge = "cti_rear_jcb003";
+				position = "rear";
+				orientation = "0";
+				drivernode0 {
+					/* Declare PCL support driver (classically known as guid)  */
+					pcl_id = "v4l2_sensor";
+					/* Driver v4l2 device name */
+					devname = "jcb003 7-0041";
+					/* Declare the device-tree hierarchy to driver instance */
+					proc-device-tree = "/proc/device-tree/i2c@c250000/jcb003_b@41";
+				};
+			};
+		};
+	};
+};

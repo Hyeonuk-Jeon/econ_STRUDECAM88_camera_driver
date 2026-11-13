@@ -1,0 +1,6 @@
+#include "../../galen/kernel-dts/cti/tegra194-agx-cti-AGX102.dts"
+#include "../common/tegra194-p2888-0008-p2822-0000.dtsi"
+/{
+
+    nvidia,dtsfilename = "tegra194-agxi-cti-AGX102.dts";
+};

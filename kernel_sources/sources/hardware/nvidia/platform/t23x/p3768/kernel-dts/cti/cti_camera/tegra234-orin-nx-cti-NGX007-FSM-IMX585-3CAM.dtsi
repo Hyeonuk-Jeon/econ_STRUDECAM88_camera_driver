@@ -1,0 +1,220 @@
+/*
+ * Copyright (c) 2023, Connect Tech Inc.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "tegra234-orin-nx-cti-NGX007-FSM-3CAM-base.dtsi"
+#include "tegra234-cti-fsm-imx585-modes-header.dtsi"
+
+#include "dt-bindings/clock/tegra234-clock.h"
+
+
+/ {
+	i2c@3180000 {
+		tca9548@70 {
+			status = "okay";	
+			i2c@0 {
+					status = "okay";
+					imx585_a@1a{
+								status = "okay";
+                                															
+								reset-gpios = <&gpio_i2c_cam 0 GPIO_ACTIVE_HIGH>;
+								pwdn-gpios = <&tegra_main_gpio CAM0_PWDN GPIO_ACTIVE_HIGH>;
+								
+								devnode = "video0";
+                                SENSOR_COMMON
+
+								mode0 {
+										lane_polarity = "6";
+										
+										tegra_sinterface = "serial_a";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE0_2LANE
+								};
+								mode1 {
+										lane_polarity = "6";
+										
+										tegra_sinterface = "serial_a";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE1_2LANE
+								};
+
+								mode2 {
+										lane_polarity = "6";
+										
+										tegra_sinterface = "serial_a";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE2_2LANE
+								};
+
+								ports {
+									#address-cells = <1>;
+									#size-cells = <0>;
+
+									port@0 {
+										reg = <0>;
+										vi_out0: endpoint {
+											port-index = <0>;
+											bus-width = <2>;
+											remote-endpoint = <&csi_in0>;
+										};
+									};
+								};
+					};
+				};
+				i2c@1 {
+					status = "okay";
+					imx585_c@1a{
+								status = "okay";
+								
+								reset-gpios = <&gpio_i2c_cam 2 GPIO_ACTIVE_HIGH>;
+								pwdn-gpios = <&tegra_main_gpio CAM1_PWDN GPIO_ACTIVE_HIGH>;
+								
+								devnode = "video2";
+                                SENSOR_COMMON
+
+								mode0 {
+										lane_polarity = "0";
+										
+										tegra_sinterface = "serial_c";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE0_2LANE
+								};
+								mode1 {
+										lane_polarity = "0";
+										
+										tegra_sinterface = "serial_c";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE1_2LANE
+								};
+
+								mode2 {
+										lane_polarity = "0";
+										
+										tegra_sinterface = "serial_c";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE2_2LANE
+								};
+
+
+								ports {
+									#address-cells = <1>;
+									#size-cells = <0>;
+
+									port@0 {
+										reg = <0>;
+										vi_out1: endpoint {
+											port-index = <2>;
+											bus-width = <2>;
+											remote-endpoint = <&csi_in1>;
+										};
+									};
+								};
+							};
+						};
+				i2c@2 {
+					status = "okay";
+					imx585_d@1a{
+								status = "okay";
+								
+								reset-gpios = <&gpio_i2c_cam 4 GPIO_ACTIVE_HIGH>;
+								pwdn-gpios = <&gpio_i2c_cam 5 GPIO_ACTIVE_HIGH>;
+								
+								devnode = "video4";
+                                SENSOR_COMMON                              
+
+								mode0 {
+										lane_polarity = "0";
+										
+										tegra_sinterface = "serial_d";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE0_2LANE
+								};
+								mode1 {
+										lane_polarity = "0";
+										
+										tegra_sinterface = "serial_d";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE1_2LANE
+								};
+
+								mode2 {
+										lane_polarity = "0";
+										
+										tegra_sinterface = "serial_d";
+										pix_clk_hz = "475200000";
+										SENSOR_MODE2_2LANE
+								};
+
+
+								ports {
+									#address-cells = <1>;
+									#size-cells = <0>;
+
+									port@0 {
+										reg = <0>;
+										vi_out2: endpoint {
+											port-index = <3>;
+											bus-width = <2>;
+											remote-endpoint = <&csi_in2>;
+										};
+									};
+								};
+							};
+						};
+				};
+				
+			};
+
+	tegra-camera-platform {
+		modules {
+			module0 {
+				badge = "imx585_bottomleft_framos";
+				position = "bottomleft";
+				orientation = "1";
+				status = "okay";
+				drivernode0 {
+					status = "okay";
+					pcl_id = "v4l2_sensor";
+					devname = "imx585 30-001a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@0/imx585_a@1a";
+				};
+			};
+			module1 {
+				badge = "imx585_centerright_framos";
+				position = "centerright";
+				orientation = "1";
+				status = "okay";
+				drivernode0 {
+					status = "okay";
+					pcl_id = "v4l2_sensor";
+					devname = "imx585 31-001a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@1/imx585_c@1a";
+				};
+			};
+			module2 {
+				badge = "imx585_bottomright_framos";
+				position = "bottomright";
+				orientation = "1";
+				status = "okay";
+				drivernode0 {
+					status = "okay";
+					pcl_id = "v4l2_sensor";
+					devname = "imx585 32-001a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@2/imx585_d@1a";
+				};
+			};
+		};
+	};
+};

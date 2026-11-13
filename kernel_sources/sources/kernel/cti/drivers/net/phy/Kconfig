@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config CTI_AQUANTIA_PHY
+    tristate "CTI Aquantia PHY Driver"
+    help
+       Aquantia AQR113 PHY driver for Connect Tech Carrier Boards
+
+config CTI_CS4223E_PHY
+    tristate "CTI Inphi PHY Driver"
+    help
+       INPHI CS4223E PHY Driver for Connect Tech Carrier Boards
+
+

@@ -1,0 +1,6 @@
+#include "tegra194-agxi-cti-AGX104.dts" 
+#include "../../galen/kernel-dts/cti/cti_camera/tegra194-agx-cti-camera-AGX104-ECON-NILECAM20.dtsi" 
+/{
+    nvidia,dtsfilename = "tegra194-agxi-cti-AGX104-ECON-NILECAM25-8CAM.dts";
+    nvidia,dtbbuildtime = __DATE__, __TIME__;
+};

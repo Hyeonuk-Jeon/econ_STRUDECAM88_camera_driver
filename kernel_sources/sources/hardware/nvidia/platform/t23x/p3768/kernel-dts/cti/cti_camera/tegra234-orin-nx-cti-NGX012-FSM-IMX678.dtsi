@@ -1,0 +1,175 @@
+/*
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+//#include <dt-bindings/media/camera.h>
+#include "tegra234-cti-fsm-imx678-modes-header.dtsi"
+
+/ {
+
+    tegra-capture-vi {
+        num-channels = <1>;
+        status = "okay";
+        ports {
+            #address-cells = <1>;
+			#size-cells = <0>;
+            port@0 {
+                status = "okay";
+                reg = <0>;
+                vi_in0: endpoint {
+                    status = "okay";
+                    port-index = <0>;
+                    bus-width = <4>;
+                    remote-endpoint = <&csi_out0>;
+                    vc-id = <0>;
+                };
+            };
+        };
+    };
+
+    host1x@13e00000 {
+        nvcsi@15a00000 {
+            status="okay";
+            num-channels = <1>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            channel@0 {
+                status = "okay";
+                reg = <0>;
+                ports {
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+                    status = "okay";
+                    port@0 {
+                        status = "okay";
+						reg = <0>;
+                        csi_in0: endpoint@0 {
+                            status = "okay";
+                            port-index = <0>;
+                            bus-width = <4>;
+                            remote-endpoint = <&vi_out0>;
+                        };
+                    };
+                    port@1 {
+                        status = "okay";
+                        reg = <1>;
+                        csi_out0: endpoint@1 {
+                            remote-endpoint = <&vi_in0>;
+                        };
+                    };
+                };
+            };
+        };
+    };
+
+    i2c@3180000 {
+        imx678_a@1a {
+            
+	    devnode = "video0";							
+	    SENSOR_COMMON
+								
+            mode0 {
+	  	lane_polarity = "6";
+	 	tegra_sinterface = "serial_a";
+	    	pix_clk_hz = "950400000";
+	   	SENSOR_MODE0_4LANE
+	    };
+	    mode1 {
+		lane_polarity = "6";
+		tegra_sinterface = "serial_a";
+		pix_clk_hz = "950400000";
+		SENSOR_MODE1_4LANE
+	    };
+	    mode2 {
+		lane_polarity = "6";
+		tegra_sinterface = "serial_a";
+		pix_clk_hz = "950400000";
+		SENSOR_MODE2_4LANE
+	    };
+	    mode3 {
+		lane_polarity = "6";
+		tegra_sinterface = "serial_a";
+		pix_clk_hz = "950400000";
+		SENSOR_MODE3_4LANE
+	    };
+	    mode4 {
+		lane_polarity = "6";
+		tegra_sinterface = "serial_a";
+		pix_clk_hz = "950400000";
+		SENSOR_MODE4_4LANE
+	    };
+	    mode5 {
+		lane_polarity = "6";
+		tegra_sinterface = "serial_a";
+		pix_clk_hz = "950400000";
+		SENSOR_MODE5_4LANE
+	    };
+	    mode6 {
+	   	lane_polarity = "6";
+	   	tegra_sinterface = "serial_a";
+	   	pix_clk_hz = "950400000";
+	    	SENSOR_MODE6_4LANE
+	    };
+
+            ports {
+                #address-cells = <1>;
+                #size-cells = <0>;
+
+                port@0 {
+                    reg = <0>;
+                    vi_out0: endpoint {
+                        port-index = <0>;
+                        bus-width = <4>;
+                        remote-endpoint = <&csi_in0>;
+                        vc-id = <0>;
+                    };
+                };
+            };
+        };
+    };
+
+    framos_platform_adapter {
+        cam,use-cam-gpio = "true";
+    };
+
+    tegra-camera-platform {
+        compatible = "nvidia, tegra-camera-platform";
+
+        num_csi_lanes = <4>;
+	max_lane_speed = <1500000>;
+	min_bits_per_pixel = <10>;
+	vi_peak_byte_per_pixel = <2>;
+	vi_bw_margin_pct = <25>;
+	max_pixel_rate = <240000>;
+	isp_peak_byte_per_pixel = <5>;
+	isp_bw_margin_pct = <25>;
+
+        modules {
+            module0 {
+                badge = "imx678_front";
+                position = "front";
+                orientation = "1";
+                status = "okay";
+                drivernode0 {
+                    status = "okay";
+                    pcl_id = "v4l2_sensor";
+                    devname = "imx678 2-001a";
+                    proc-device-tree = "/proc/device-tree/i2c@3180000/imx678_a@1a";
+                };
+            };
+        };
+    };
+};

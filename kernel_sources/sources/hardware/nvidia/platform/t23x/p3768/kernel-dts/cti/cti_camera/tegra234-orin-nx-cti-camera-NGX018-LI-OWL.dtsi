@@ -1,0 +1,363 @@
+/*
+ * Copyright (c) 2022, Connect Tech Inc.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+//#include "tegra234-orin-agx-cti-csi.dtsi"
+#include "dt-bindings/clock/tegra234-clock.h"
+
+// #define RST_IO_EXP 			TEGRA234_MAIN_GPIO(AC,1)
+// #define PWM_CALIB_GPIO 		TEGRA234_MAIN_GPIO(H,7) //CAM0_PWDN
+// #define TRIGGER_SEL 		TEGRA234_MAIN_GPIO(I,0) //CAM0_RST
+// #define PWR_EN				TEGRA234_MAIN_GPIO(AC, 7)
+
+#define CAM0_PWDN	TEGRA234_MAIN_GPIO(H, 6)
+// trig 	- 	GPIO3 PR.00 	- 	MFP7
+// reset 	- 	GPIO3 PQ.05 	- 	MFP8
+// boot 	- 	GPIO3 PCC.03 	- 	MFP9
+// int 		- 	GPIO3 PCC.01 	- 	MFP10
+#define DESER_RESET TEGRA234_MAIN_GPIO(Q, 5)
+#define DESER_TRIG  TEGRA234_MAIN_GPIO(R, 0)
+#define DESER_BOOT  TEGRA234_AON_GPIO(CC, 3)
+#define DESER_INT   TEGRA234_AON_GPIO(CC, 1)
+
+#define CAM_LANES 	4
+#define CAM_LANES_STRING "4"
+#define MODE_VC "0"
+#define LANE_POLARITY "6"
+#define SERDES_PIX_CLK_HZ "590000000" 
+#define PIX_CLK_HZ   "134400000"
+#define TRIG_MODE 1
+#define MAX929X_AB 1
+#define MAX929X_A  0
+
+#define TEGRA_SINTERFACE "serial_a"
+
+                                        
+
+#define LI_OWL_MODE0 mode0 { \
+					mclk_khz = "24000"; \
+					num_lanes = CAM_LANES_STRING; \
+					tegra_sinterface = TEGRA_SINTERFACE; \
+					phy_mode = "DPHY"; \
+					vc_id = MODE_VC; \
+					discontinuous_clk = "no"; \
+					dpcm_enable = "false"; \
+					cil_settletime = "0"; \
+					dynamic_pixel_bit_depth = "10"; \
+					csi_pixel_bit_depth = "10"; \
+					mode_type = "bayer"; \
+					pixel_phase = "grbg"; \
+					active_w = "1920"; \
+					active_h = "1200"; \
+					readout_orientation = "0"; \
+					line_length = "2448"; \
+					inherent_gain = "1"; \
+					mclk_multiplier = "3.01"; \
+					lane_polarity = LANE_POLARITY; \
+					pix_clk_hz = PIX_CLK_HZ; \
+					serdes_pix_clk_hz = SERDES_PIX_CLK_HZ; \
+					gain_factor = "100"; \
+					min_gain_val = "100"; \
+					max_gain_val = "1600"; \
+					step_gain_val = "1"; \
+					default_gain = "100"; \
+					min_hdr_ratio = "1"; \
+					max_hdr_ratio = "1"; \
+					framerate_factor = "1000000"; \
+					min_framerate = "30000000"; \
+					max_framerate = "30000000"; \
+					step_framerate = "30000000"; \
+					default_framerate = "30000000"; \
+					exposure_factor = "1000000"; \
+					min_exp_time = "28"; \
+					max_exp_time = "22000"; \
+					step_exp_time = "1"; \
+					default_exp_time = "22000"; \
+					embedded_metadata_height = "0"; \
+				}; \
+
+
+//serdes_pix_clk_hz = "299000000"; //orig val
+
+/ {
+
+	gpio@2200000 {
+		status = "okay";
+		camera-control-output-low {
+			gpio-hog;
+			output-low;
+			gpios = <CAM0_PWDN 0 DESER_RESET 0>;
+			label = "cam0-pwdn", "deser-reset";
+			status = "okay";
+		};
+	};
+
+	gpio@c2f0000 {
+		status = "okay";
+		camera-control-output-low-aon {
+			gpio-hog;
+			output-low;
+			gpios = <DESER_BOOT 0>;
+			label = "deser-boot";
+			status = "okay";
+		};
+	};
+
+    i2c@3180000 {
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+
+		max96712_a@60 {
+			compatible = "nvidia,max96712";
+			reg = <0x60>;
+			channel = "a";
+		};
+
+		ar0234owl_a@19 {
+			status = "okay";
+			devnode = "video0";
+			devnode-bus = "2";
+			reg = <0x19>;
+			compatible = "onsemi,ar0234owl";
+			clocks = <&bpmp_clks TEGRA234_CLK_EXTPERIPH1>,<&bpmp_clks TEGRA234_CLK_EXTPERIPH1>;
+			mclk = "extperiph1";
+			channel = "a";
+			link = "a";
+			reset-gpios = <&tegra_main_gpio DESER_RESET GPIO_ACTIVE_HIGH>;
+			sync_sensor = "OWL1";
+			sync_sensor_index = <1>;
+			reg_mux = <0>;
+			camera_index = "a";
+			clock-names = "extperiph1","pllp_grtba";
+			master-mode = <TRIG_MODE>; //master mode
+			physical_w = "15.0";
+			physical_h = "12.5";
+			sensor_model = "ar0234owl";
+			post_crop_frame_drop = "0";
+			use_sensor_mode_id = "true";
+			port-split = <MAX929X_AB>; //split over port A && port B
+			//has-eeprom;
+			
+			LI_OWL_MODE0
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					cam_out0: endpoint {
+						vc-id = <0>;
+						port-index = <0>;
+						bus-width = <4>;
+						remote-endpoint = <&csi_in0>;
+					};
+				};
+			};
+		};
+		ar0234owl_b@1a {
+			status = "okay";
+			devnode = "video1";
+			devnode-bus = "2";
+			reg = <0x1a>;
+			compatible = "onsemi,ar0234owl";
+			clocks = <&bpmp_clks TEGRA234_CLK_EXTPERIPH1>,<&bpmp_clks TEGRA234_CLK_EXTPERIPH1>;
+			mclk = "extperiph1";
+			channel = "n";
+			link = "n";
+			reset-gpios = <&tegra_main_gpio DESER_RESET GPIO_ACTIVE_HIGH>;
+			sync_sensor = "OWL2";
+			sync_sensor_index = <1>;
+			reg_mux = <0>;
+			camera_index = "b";
+			clock-names = "extperiph1","pllp_grtba";
+			master-mode = <TRIG_MODE>; //master mode
+			physical_w = "15.0";
+			physical_h = "12.5";
+			sensor_model = "ar0234owl";
+			post_crop_frame_drop = "0";
+			use_sensor_mode_id = "true";
+			port-split = <MAX929X_AB>;
+			//has-eeprom;
+#undef MODE_VC
+#define MODE_VC "1"
+#undef TEGRA_SINTERFACE
+#define TEGRA_SINTERFACE "serial_c"
+#undef LANE_POLARITY
+#define LANE_POLARITY "0"
+			LI_OWL_MODE0
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					cam_out1: endpoint {
+						vc-id = <1>;
+						port-index = <2>;
+						bus-width = <4>;
+						remote-endpoint = <&csi_in1>;
+					};
+				};
+			};
+		};
+		
+    };
+    
+    tegra-capture-vi {
+        status = "okay";
+        num-channels = <2>;
+        ports {
+	    	#address-cells = <1>;
+	    	#size-cells = <0>;
+	    	status = "okay";
+            port@0 {
+			reg = <0>;
+                status = "okay";
+                vi_in0: endpoint {
+		    		vc-id = <0>;
+                    port-index = <0>;
+                    status = "okay";
+                    bus-width = <CAM_LANES>;
+		    		remote-endpoint = <&csi_out0>;
+                };
+            };
+            port@1 {
+                status = "okay";
+				reg = <1>;
+                vi_in1: endpoint {
+		    		vc-id = <1>;
+                    port-index = <2>;
+                    status = "okay";
+                    bus-width = <CAM_LANES>;
+		    		remote-endpoint = <&csi_out1>;
+                };
+            };
+        };
+    };
+
+    host1x@13e00000 {
+        nvcsi@15a00000 {
+	    	num-channels = <2>;
+	    	#address-cells = <1>;
+	    	#size-cells = <0>;
+            status = "okay";
+            channel@0 {
+                status = "okay";
+				reg = <0>;
+                ports {
+		    		#address-cells = <1>;
+		    		#size-cells = <0>;
+                    port@0 {
+                        status = "okay";
+						reg = <0>;
+                        csi_in0: endpoint@0 {
+                            status = "okay";
+                            port-index = <0>;
+			    			vc-id = <0>;
+			    			bus-width = <CAM_LANES>;
+                            remote-endpoint = <&cam_out0>;
+                        };
+                    };
+                    port@1 {
+                        status = "okay";
+						reg = <1>;
+                        csi_out0: endpoint@1 {
+                            status = "okay";
+			    			port-index = <0>;
+			    			vc-id = <0>;
+			    			bus-width = <CAM_LANES>;
+			    			remote-endpoint = <&vi_in0>;
+                        };
+                    };
+                };
+            };
+            channel@1 {
+                status = "okay";
+				reg = <1>;
+                ports {
+		    		#address-cells = <1>;
+		    		#size-cells = <0>;
+                    
+		    		port@0 {
+						reg = <0>;
+                		status = "okay";
+                		csi_in1: endpoint@2 {
+                            status = "okay";
+			    			port-index = <2>;
+			    			vc-id = <1>;
+                            bus-width = <CAM_LANES>;
+                            remote-endpoint = <&cam_out1>;
+                        };
+                    };
+                    port@1 {
+                        status = "okay";
+						reg = <1>;
+                        csi_out1: endpoint@3 {
+                            status = "okay";
+			    			port-index = <2>;
+			    			vc-id = <1>;
+			    			bus-width = <CAM_LANES>;
+			    			remote-endpoint = <&vi_in1>;
+                        };
+                    };
+                };
+            };
+        };
+    };
+
+
+    tegra-camera-platform {
+        num_csi_lanes = <8>;
+        max_lane_speed = <1500000>;
+        min_bits_per_pixel = <10>;
+        vi_peak_byte_per_pixel = <2>;
+        vi_bw_margin_pct = <25>;
+		max_pixel_rate = <240000>;
+        isp_peak_byte_per_pixel = <5>;
+        isp_bw_margin_pct = <25>;
+		compatible = "nvidia, tegra-camera-platform";
+		status = "okay";
+        
+		modules {
+			status = "okay";
+			module0 {
+				status = "okay";
+				badge = "ar0234owl_bottomleft";
+				position = "bottomleft";
+				orientation = "1";
+				drivernode0 {
+					status = "okay";
+					pcl_id = "v4l2_sensor";
+					devname = "ar0234owl 2-0019";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/ar0234owl_a@19";
+				};
+			};
+			module1 {
+				status = "okay";
+				badge = "ar0234owl_bottomright";
+				position = "bottomright";
+				orientation = "1";
+				drivernode0 {
+					status = "okay";
+					pcl_id = "v4l2_sensor";
+					devname = "ar0234owl 2-001a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/ar0234owl_b@1a";
+				};
+			};
+        };
+    };
+};

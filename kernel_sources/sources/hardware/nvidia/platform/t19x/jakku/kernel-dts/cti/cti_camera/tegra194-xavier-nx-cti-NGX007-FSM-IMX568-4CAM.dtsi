@@ -1,0 +1,167 @@
+/*
+ * tegra194-camera-imx568.dtsi - imx464 sensor device tree
+ *
+ * Copyright (c) 2019. FRAMOS.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* camera control gpio definitions */
+#include "tegra194-cti-camera-fsm-imx568-4cam-1mux-1sensor-header.dtsi"
+#include "tegra194-cti-fsm-imx568-modes-header.dtsi"
+#include "tegra194-cti-camera-4cam-1mux-1sensor-base.dtsi"
+#include "tegra194-xavier-nx-cti-NGX007-FSM-4CAM-base.dtsi"
+
+
+/* camera control gpio definitions */
+/ {
+	tegra-camera-platform {
+		compatible = "nvidia, tegra-camera-platform";
+
+		/**
+		* Physical settings to calculate max ISO BW
+		*
+		* num_csi_lanes = <>;
+		* Total number of CSI lanes when all cameras are active
+		*
+		* max_lane_speed = <>;
+		* Max lane speed in Kbit/s
+		*
+		* min_bits_per_pixel = <>;
+		* Min bits per pixel
+		*
+		* vi_peak_byte_per_pixel = <>;
+		* Max byte per pixel for the VI ISO case
+		*
+		* vi_bw_margin_pct = <>;
+		* Vi bandwidth margin in percentage
+		*
+		* max_pixel_rate = <>;
+		* Max pixel rate in Kpixel/s for the ISP ISO case
+		*
+		* isp_peak_byte_per_pixel = <>;
+		* Max byte per pixel for the ISP ISO case
+		*
+		* isp_bw_margin_pct = <>;
+		* Isp bandwidth margin in percentage
+		*/
+		num_csi_lanes = <12>;
+		max_lane_speed = <1500000>;
+		min_bits_per_pixel = <10>;
+		vi_peak_byte_per_pixel = <2>;
+		vi_bw_margin_pct = <25>;
+		max_pixel_rate = <240000>;
+		isp_peak_byte_per_pixel = <5>;
+		isp_bw_margin_pct = <25>;
+	};
+};
+
+/{
+	i2c@3180000 {
+		tca9548@70 {
+			i2c@0 {
+				imx568_a@1a {
+					devnode = "video0";
+
+                    reset-gpios = <&gpio_i2c_cam 0 GPIO_ACTIVE_HIGH>;
+                    pwdn-gpios = <&tegra_main_gpio CAM0_PWDN_0 GPIO_ACTIVE_HIGH>;
+				    SENSOR_COMMON
+
+#define TEGRA_SINTERFACE I2C0_NODE0_SINTERFACE
+#define NUM_LANES NUM_OF_LANES0
+#define PIX_CLK_HZ PIX_CLK_HZ0
+
+                    SENSOR_MODE0
+                    SENSOR_MODE1
+                    SENSOR_MODE2
+                    SENSOR_MODE3
+                    SENSOR_MODE4
+                    SENSOR_MODE5
+	                SENSOR_MODE6
+                    SENSOR_MODE7
+                };
+			};
+            
+			i2c@1 {
+				imx568_c@1a {
+					devnode = "video2";
+                    pwdn-gpios = <&tegra_main_gpio CAM1_PWDN_0 GPIO_ACTIVE_HIGH>;
+                    reset-gpios = <&gpio_i2c_cam 2 GPIO_ACTIVE_HIGH>;
+                    SENSOR_COMMON
+#undef TEGRA_SINTERFACE
+#undef NUM_LANES
+#undef PIX_CLK_HZ
+#define TEGRA_SINTERFACE I2C1_NODE0_SINTERFACE
+#define NUM_LANES NUM_OF_LANES1
+#define PIX_CLK_HZ PIX_CLK_HZ1
+
+                    SENSOR_MODE0
+                    SENSOR_MODE1
+                    SENSOR_MODE2
+                    SENSOR_MODE3
+                    SENSOR_MODE4
+                    SENSOR_MODE5
+				    SENSOR_MODE6
+                    SENSOR_MODE7
+                };
+			};
+            i2c@2 {
+                imx568_d@1a {
+                    devnode = "video3";
+                    pwdn-gpios = <&gpio_i2c_cam 5 GPIO_ACTIVE_HIGH>;
+                    reset-gpios = <&gpio_i2c_cam 4 GPIO_ACTIVE_HIGH>;
+                    SENSOR_COMMON
+#undef TEGRA_SINTERFACE
+#undef NUM_LANES
+#undef PIX_CLK_HZ
+#define TEGRA_SINTERFACE I2C2_NODE0_SINTERFACE
+#define NUM_LANES NUM_OF_LANES2
+#define PIX_CLK_HZ PIX_CLK_HZ2
+
+                    SENSOR_MODE0
+                    SENSOR_MODE1
+                    SENSOR_MODE2
+                    SENSOR_MODE3
+                    SENSOR_MODE4
+                    SENSOR_MODE5
+                    SENSOR_MODE6
+                    SENSOR_MODE7
+                };
+            };            
+            i2c@3 {
+				imx568_e@1a {
+					devnode = "video4";
+                    pwdn-gpios =  <&gpio_i2c_cam 8 GPIO_ACTIVE_HIGH>;
+                    reset-gpios = <&gpio_i2c_cam 7 GPIO_ACTIVE_HIGH>;
+                    SENSOR_COMMON
+#undef TEGRA_SINTERFACE
+#undef NUM_LANES
+#undef PIX_CLK_HZ
+#define TEGRA_SINTERFACE I2C3_NODE0_SINTERFACE
+#define NUM_LANES NUM_OF_LANES3
+#define PIX_CLK_HZ PIX_CLK_HZ3
+
+                    SENSOR_MODE0
+                    SENSOR_MODE1
+                    SENSOR_MODE2
+                    SENSOR_MODE3
+                    SENSOR_MODE4
+                    SENSOR_MODE5
+                    SENSOR_MODE6
+                    SENSOR_MODE7
+         	   	};
+		};
+	};
+};
+};

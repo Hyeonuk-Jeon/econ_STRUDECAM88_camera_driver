@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config CTI_I2C_MAX14830_UART
+    tristate "CTI MAX14830 Quad I2C Uart Driver"
+    help
+       Max14830 quad uart driver for CTI carriers
+

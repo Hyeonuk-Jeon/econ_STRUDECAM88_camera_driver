@@ -1,0 +1,165 @@
+/*
+ * Copyright (c) 2023, Connect Tech Inc.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "tegra234-orin-nx-cti-base.dtsi"
+
+/{
+    nvidia,dtsfilename = "tegra234-orin-nx-cti-NGX022.dts";
+    
+    model = "CTI Lepton + Orin NX";
+    //enable serial connections
+    // UART 0 /dev/ttyTHS1
+    serial@3110000 {
+        status = "okay";
+    };
+    // UART 1 /dev/ttyTHS0
+    serial@3100000 {/* UARTA, for 40 pin header */
+        status = "okay";
+    };
+    
+    fixed-regulators {
+        regulator@200 {
+            /delete-property/ gpio;
+        };
+    };
+    
+    pwm-fan {
+        status = "disabled";
+        /delete-property/ pwms;
+    };
+    //disable spi2
+    spi@3230000{
+        status = "disabled";
+    };
+    /**define i2c-0*/
+    i2c@c240000{
+		status = "okay";
+	};
+	
+	/**define i2c-2*/
+    i2c@3160000{
+        status = "okay";
+    };
+
+    /** define tca9539 on i2c-1*/
+    i2c@c250000 {
+        status = "okay";
+        cam_gpios:tca9539@74{
+            status = "okay";
+            compatible="ti,tca9539";
+            vcc-supply = <&vdd_1v8_sys>;
+            gpio-controller;
+            #gpio-cells=<2>;
+            reg=<0x74>;
+        };
+		/** PTN5150 */
+		ptn5150@3d{
+            reg = <0x3d>;
+            compatible = "cti,ptn5150";
+            status = "okay";
+            interrupt-parent = <&tegra_main_gpio>;
+            interrupts = <TEGRA234_MAIN_GPIO(Q, 5) IRQ_TYPE_LEVEL_LOW>;
+            
+            connector@0 {
+                compatible = "usb-c-connector";
+                label = "USB-C";
+                data-role = "dual";
+
+                //Supported Advertised Current Modes: "default" (900mA), "1.5A", "3.0A"
+                power-opmode = "1.5A";
+                port {
+                    ptn5150_typec0_ep: endpoint {
+                        remote-endpoint = <&usb_role_switch0>;
+                    };
+                };
+            };
+
+        };
+    };
+	
+	tegra_xhci: xhci@3610000 {
+		status = "okay";
+		phys =	<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-0}>,
+				<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-1}>,
+				<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-2}>,
+				<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-0}>,
+				<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-2}>;
+		phy-names = "usb2-0", "usb2-1", "usb2-2", "usb3-0", "usb3-2";
+	};
+	
+    xusb_padctl@3520000 {
+		pads {
+				usb3 {
+					lanes {
+						usb3-2 {
+							nvidia,function = "xusb";
+							status = "okay";
+						};
+					};
+				};
+			};
+        ports {
+			usb2-0 {
+                /delete-node/ connector;
+				port{
+					usb_role_switch0: endpoint {
+						remote-endpoint = <&ptn5150_typec0_ep>;
+					};
+				};
+			};
+            usb3-0 {
+				nvidia,usb2-companion = <0>;
+				status = "okay";
+			};
+			usb3-2 {
+				nvidia,usb2-companion = <2>;
+				status = "okay";
+			};
+        };
+    };
+	
+	//pcie limit 3rd gen
+    //14160000 Limit max of NVMe port to gen 3 to avoid AER errors
+    pcie@14160000{
+        max-link-speed=<0x3>;
+    };
+	
+	/** i210 pcie-2 c7 */
+	pcie@141e0000 {
+        status = "okay";
+        phys = <&p2u_gbe_0>;
+        phy-names = "p2u-0";
+    };
+	
+	gpio@2200000 {
+        usb-typa-vbus-gpio{  //all type-a usb  
+            status="okay";
+            gpio-hog;
+            output-low;
+            gpios=<TEGRA234_MAIN_GPIO(Q, 2) GPIO_ACTIVE_HIGH>;
+            label="usb-typa-vbus-gpio";
+        };
+		usb-typc-vbus-gpio{  //type-c otg vbus-en
+            status="okay";
+            gpio-hog;
+            output-high;
+            gpios=<TEGRA234_MAIN_GPIO(Z, 1) GPIO_ACTIVE_HIGH>;
+            label="usb-typc-vbus-gpio";
+        };
+    };
+
+};
+
