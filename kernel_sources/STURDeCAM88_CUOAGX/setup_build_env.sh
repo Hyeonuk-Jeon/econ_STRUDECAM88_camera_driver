@@ -2,7 +2,7 @@
 # STURDeCAM88_CUOAGX カーネル/ドライバビルド用の環境変数を設定する。
 # 使い方: source setup_build_env.sh   (実行ではなく source すること)
 
-export TOP_DIR=~/camera_driver_build
+export TOP_DIR=/home/yy/ME450/camera_driver_build
 
 export TOOL_CHAIN=$TOP_DIR/tool_chain
 export RELEASE_PACK_DIR=$TOP_DIR/STURDeCAM88_CUOAGX_FORGE_ORIN_AGX_L4T35.4.1_R05
