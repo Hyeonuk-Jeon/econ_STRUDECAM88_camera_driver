@@ -523,13 +523,6 @@ int ser1_i2c_reassignment(struct econ_stream_monitor *err_cam)
 			dev_info(&err_cam->client->dev,
 					"SER1 I2C re-assigned with addr = 0x%02x\n"
 					, reg_val >> 1);
-					if (serdes_parse_regdata(err_cam->client,
-                                                SER1_PKT_HEADER_CHANGE,
-                                                ser1_pkt_header_array_size,
-                                                ser_addr) < 0) {
-                                                dev_err(&err_cam->client->dev, "%s: Failed to set LINKA serializer TX_SRC_ID\n", __func__);
-                                continue;
-                        }
 			return ser_addr;
 		}
 	}
@@ -565,16 +558,6 @@ int ser2_i2c_reassignment(struct econ_stream_monitor *err_cam)
 			dev_info(&err_cam->client->dev,
 					"SER2 I2C re-assigned with addr = 0x%02x\n"
 					, reg_val >> 1);
-
-			/*Change GMSL2 Packet header*/
-			if (serdes_parse_regdata(err_cam->client,
-						SER2_PKT_HEADER_CHANGE,
-						ser2_pkt_header_array_size,
-						ser_addr) < 0) {
-				dev_err(&err_cam->client->dev,
-						"%s: Failed to LINKBSerializer header change I2C translation\n", __func__);
-				continue;
-			}
 			return ser_addr;
 		}
 	}
@@ -728,6 +711,15 @@ int ser1_detect(struct econ_stream_monitor *err_cam)
 		}
 		if (reg_val >> 1 == ser_addr) {
 			pr_info("Serializer Chip is present @addr = %02x\n", reg_val >> 1);
+			if (serdes_parse_regdata(err_cam->client,
+						SER1_PKT_HEADER_CHANGE,
+						ser1_pkt_header_array_size,
+						ser_addr) < 0) {
+				dev_err(&err_cam->client->dev, "%s: Failed to LINKA Serializer header change I2C translation\n", __func__);
+				continue;
+			} else {
+				dev_info(&err_cam->client->dev, "%s: SUCCESS LINKA Serializer header change I2C translation\n", __func__);
+			}
 		} else {
 			pr_info("I2C Re-assignment required for LINK A Serializer\n");
 
@@ -789,6 +781,15 @@ int ser2_detect(struct econ_stream_monitor *err_cam)
 		}
 		if (reg_val >> 1 == ser_addr) {
 			pr_info("Serializer Chip is present @addr = %02x\n", reg_val >> 1);
+			if (serdes_parse_regdata(err_cam->client,
+						SER2_PKT_HEADER_CHANGE,
+						ser2_pkt_header_array_size,
+						ser_addr) < 0) {
+				dev_err(&err_cam->client->dev, "%s: Failed to LINKB Serializer header change I2C translation\n", __func__);
+				continue;
+			} else {
+				dev_info(&err_cam->client->dev, "%s: SUCCESS LINKB Serializer header change I2C translation\n", __func__);
+			}
 		} else {
 			pr_info("I2C Re-assignment required for LINK B Serializer\n");
 
@@ -982,6 +983,7 @@ int serdes_link_status(struct econ_stream_monitor *err_cam)
 int serdes_err_handle(struct econ_stream_monitor *err_cam)
 {
 	int ret_val = 0;
+	uint8_t temp = 0, serdes_speed = 0, dser_rev = 0;
 
 	/* Detect Presence of  Deserializer/Serializer Chip
 	 *  and Check GMSL link lock and Frames from the Camera
@@ -1039,6 +1041,35 @@ serdes_reconf:
 			"%s: Failed to configure DESER Serializer\n", __func__);
 		return -EIO;
 	}
+
+	/* Setting MIPI clock based on Deser Rev*/
+
+	serdes_read_16b_reg(err_cam->client,
+			err_cam->cam->dser_addr, 0x000E, &temp);
+
+	dser_rev = temp & 0x0F;
+
+	if (dser_rev == 0x0C) {
+		dev_info(&err_cam->client->dev, "DSER REV %d setting clock 0x34\n", dser_rev);
+		serdes_speed = 0x34;
+	} else {
+		dev_info(&err_cam->client->dev, "DSER REV %d setting clock 0x37\n", dser_rev);
+		serdes_speed = 0x37;
+	}
+
+	if ((serdes_write_16b_reg(err_cam->client, err_cam->cam->dser_addr,
+						0x0320, serdes_speed)) < 0) {
+		dev_err(&err_cam->client->dev, "%s(%d): Failed\n",
+					__func__, __LINE__);
+		return -EIO;
+	}
+	if ((serdes_write_16b_reg(err_cam->client, err_cam->cam->dser_addr,
+						0x0323, serdes_speed)) < 0) {
+		dev_err(&err_cam->client->dev, "%s(%d): Failed\n",
+					__func__, __LINE__);
+		return -EIO;
+	}
+
 	pr_info("configuring Deserializer Successful\n");
 	msleep(20);
 	}

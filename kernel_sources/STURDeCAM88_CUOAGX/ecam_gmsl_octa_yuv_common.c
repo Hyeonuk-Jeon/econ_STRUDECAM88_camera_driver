@@ -14,32 +14,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <linux/ktime.h>
-
 #include "ecam_gmsl_octa_yuv_common.h"
 #include "serdes.h"
 #include "serdes_common.h"
 #include "mcu_firmware.h"
-
-/*
- * Debug trace helper for the camera init sequence.
- * Enable at module load with: modprobe ecam_gmsl_yuv_common cam_init_trace=1
- * or at build time by defining CAM_INIT_TRACE_DEFAULT to 1.
- */
-#ifndef CAM_INIT_TRACE_DEFAULT
-#define CAM_INIT_TRACE_DEFAULT 1
-#endif
-
-static bool cam_init_trace = CAM_INIT_TRACE_DEFAULT;
-module_param(cam_init_trace, bool, 0644);
-MODULE_PARM_DESC(cam_init_trace,
-	"Enable [CAM-TRACE] debug prints across the camera init sequence (default: on)");
-
-#define cam_trace(dev, fmt, ...) \
-	do { \
-		if (cam_init_trace) \
-			dev_info((dev), "[CAM-TRACE] " fmt, ##__VA_ARGS__); \
-	} while (0)
 
 int ox08b40_sensor_read_SET(struct i2c_client *err_client, uint16_t reg_addr, uint8_t reg_len)
 {
@@ -2745,8 +2723,6 @@ int ecam_mcu_core_initialize(struct i2c_client *client, struct cam *priv)
 	int16_t sensor_id = 0;
 	int16_t imu_id = 0;
 
-	cam_trace(&client->dev, "ecam_mcu_core_initialize: ENTER\n");
-
 	/* Gets Sensor ID */
 	retry = 0;
 	while (retry++ < 5) {
@@ -2798,9 +2774,6 @@ int ecam_mcu_core_initialize(struct i2c_client *client, struct cam *priv)
 		dev_info(&client->dev, "IMU ID = 0x%x\n", imu_id);
 	}
 
-	cam_trace(&client->dev,
-		"ecam_mcu_core_initialize: EXIT rc=%d (sensor_id=0x%x)\n",
-		errcode, sensor_id);
 	return errcode;
 }
 
@@ -2808,8 +2781,6 @@ int mcu_configurations(struct i2c_client *client, struct cam *priv)
 {
 	int errcode = ERRCODE_SUCCESS;
 	int retry;
-
-	cam_trace(&client->dev, "mcu_configurations: ENTER\n");
 
 	/* Query the number of Controls from MCU */
 	retry = 5;
@@ -2883,9 +2854,6 @@ int mcu_configurations(struct i2c_client *client, struct cam *priv)
 	}
 
 mcu_config_error:
-	cam_trace(&client->dev,
-		"mcu_configurations: EXIT rc=%d (num_ctrls=%d, frm_fmt_size=%d)\n",
-		errcode, priv->num_ctrls, frm_fmt_size);
 	return errcode;
 }
 
@@ -3035,8 +3003,6 @@ int mcu_mipi_configuration(struct i2c_client *client, struct cam *priv, u8 cmd_i
 int toggle_mcu_reset_pin(struct i2c_client *client, struct cam *priv)
 {
 
-	cam_trace(&client->dev, "toggle_mcu_reset_pin: ENTER\n");
-
 	if (serdes_write_16b_reg(client, priv->ser_reassigned_addr,
 		priv->reset_reg, MCU_RST_LOW) < 0) {
 		dev_err(&client->dev, "%s(%d): Failed\n",
@@ -3056,7 +3022,6 @@ int toggle_mcu_reset_pin(struct i2c_client *client, struct cam *priv)
 #ifdef DEBUG
 	pr_info("RESET pin-(%x) : %x ", priv->reset_reg, MCU_RST_HIGH);
 #endif
-	cam_trace(&client->dev, "toggle_mcu_reset_pin: EXIT OK\n");
 	return 0;
 }
 
@@ -4018,12 +3983,7 @@ int check_ecam_mcu_fw_status(struct i2c_client *client, struct cam *priv, int sp
 	uint8_t ret, loop, retry, err;
 	unsigned char fw_version[32] = {0}, txt_fw_version[32] = {0};
 
-	cam_trace(&client->dev, "check_ecam_mcu_fw_status: ENTER\n");
-
 	ret = mcu_get_fw_version(client, fw_version, txt_fw_version);
-	cam_trace(&client->dev,
-		"check_ecam_mcu_fw_status: mcu_get_fw_version() rc=%d, bootdata_changed=%d\n",
-		ret, spi_flash_bootdata_changed);
 
 	if (ret != 0 || spi_flash_bootdata_changed == 0x01) {
 
@@ -4195,8 +4155,6 @@ int check_ecam_mcu_fw_status(struct i2c_client *client, struct cam *priv, int sp
 	probe_status_array[total_num_cam].mcu_fw_status_percentage = 100;
 	probe_status_array[total_num_cam].percentage = 50;
 #endif
-	cam_trace(&client->dev,
-		"check_ecam_mcu_fw_status: EXIT OK (fw_version=%.32s)\n", fw_version);
 	return 0;
 
 fw_update_err:
@@ -4204,8 +4162,6 @@ fw_update_err:
 	sprintf(probe_status_array[total_num_cam].mcu_fw_status, "Error In Updating MCU");
 	probe_status_array[total_num_cam].mcu_fw_status_percentage = -1;
 #endif
-	cam_trace(&client->dev,
-		"check_ecam_mcu_fw_status: EXIT FAIL rc=%d\n", err);
 	return err;
 
 }
@@ -4213,8 +4169,7 @@ fw_update_err:
 int serdes_configuration(struct cam *priv, struct i2c_client *client)
 {
 
-	cam_trace(&client->dev,
-		"serdes_configuration: ENTER (phy=%c)\n", priv->phy);
+	uint8_t temp = 0, serdes_speed = 0, dser_rev = 0;
 
 	/* Configuring SIOA Serializer */
 	if (priv->phy == PHY_A) {
@@ -4253,9 +4208,37 @@ int serdes_configuration(struct cam *priv, struct i2c_client *client)
 
 	}
 
+	/* Setting MIPI clock based on Deser Rev*/
+
+	serdes_read_16b_reg(client,
+			priv->dser_addr, 0x000E, &temp);
+
+	dser_rev = temp & 0x0F;
+
+	if (dser_rev == 0x0C) {
+		dev_info(&client->dev, "DSER REV %d setting clock 0x34\n", dser_rev);
+		serdes_speed = 0x34;
+	} else {
+		dev_info(&client->dev, "DSER REV %d setting clock 0x37\n", dser_rev);
+		serdes_speed = 0x37;
+	}
+
+	if ((serdes_write_16b_reg(client, priv->dser_addr,
+						0x0320, serdes_speed)) < 0) {
+		dev_err(&client->dev, "%s(%d): Failed\n",
+					__func__, __LINE__);
+		return -EIO;
+	}
+	if ((serdes_write_16b_reg(client, priv->dser_addr,
+						0x0323, serdes_speed)) < 0) {
+		dev_err(&client->dev, "%s(%d): Failed\n",
+					__func__, __LINE__);
+		return -EIO;
+	}
+
+
 	pr_info("configuring Deserializer Successful\n");
 
-	cam_trace(&client->dev, "serdes_configuration: EXIT OK\n");
 	return ERRCODE_SUCCESS;
 
 }
@@ -4264,9 +4247,6 @@ static s32 serdes_config_init(struct i2c_client *client, struct cam *priv)
 {
 	uint8_t slave_addr = 0;
 	int err = 0;
-
-	cam_trace(&client->dev,
-		"serdes_config_init: ENTER (phy=%c)\n", priv->phy);
 
 	if (priv->phy == PHY_A) {
 		dev_info(&client->dev,
@@ -4323,14 +4303,15 @@ skip_i2c_reassignment:
 		}
 		dev_info(&client->dev,
 			"SIOA Port I2C translated successfully\n");
-					/*Change GMSL2 Packet header*/
-		if (serdes_parse_regdata(client,	SER1_PKT_HEADER_CHANGE,
+
+		/*Change GMSL2 Packet header*/
+		if (serdes_parse_regdata(client, SER1_PKT_HEADER_CHANGE,
 					ARRAY_SIZE(SER1_PKT_HEADER_CHANGE),
 					priv->ser_reassigned_addr) < 0) {
-			dev_err(&client->dev, "%s: Failed to configure SIOA SerializerI2C translation\n",
-					__func__);
+			dev_err(&client->dev, "%s: Failed to configure SIOA SerializerI2C translation\n", __func__);
 			return -EIO;
 		}
+
 		/* Updating Serializer availabilty */
 		ser_status = 0x21;
 	} else if (priv->phy == PHY_B) {
@@ -4425,7 +4406,6 @@ skip_i2c_reassignment_1:
 		return -EIO;
 	}
 
-	cam_trace(&client->dev, "serdes_config_init: EXIT OK\n");
 	return ERRCODE_SUCCESS;
 error:
 	return err;
@@ -4440,7 +4420,6 @@ static int cam_power_on(struct camera_common_data *s_data)
 	if (!priv || !priv->pdata)
 		return -EINVAL;
 	dev_dbg(&priv->i2c_client->dev, "%s: power on\n", __func__);
-	cam_trace(&priv->i2c_client->dev, "cam_power_on: ENTER\n");
 
 	if (priv->pdata && priv->pdata->power_on) {
 		errcode = priv->pdata->power_on(pw);
@@ -4449,15 +4428,12 @@ static int cam_power_on(struct camera_common_data *s_data)
 							__func__);
 		else
 			pw->state = SWITCH_ON;
-		cam_trace(&priv->i2c_client->dev,
-			"cam_power_on: EXIT rc=%d (board power_on)\n", errcode);
 		return errcode;
 	}
 
 	usleep_range(1350, 1360);
 
 	pw->state = SWITCH_ON;
-	cam_trace(&priv->i2c_client->dev, "cam_power_on: EXIT OK\n");
 	return ERRCODE_SUCCESS;
 
 }
@@ -4490,7 +4466,6 @@ static int cam_power_get(struct cam *priv)
 
 	if (!priv || !priv->pdata)
 		return -EINVAL;
-	cam_trace(&priv->i2c_client->dev, "cam_power_get: ENTER\n");
 
 	mclk_name = priv->pdata->mclk_name ? priv->pdata->mclk_name : "cam_mclk1";
 
@@ -4533,7 +4508,6 @@ static int cam_power_get(struct cam *priv)
 
 done:
 	pw->state = SWITCH_OFF;
-	cam_trace(&priv->i2c_client->dev, "cam_power_get: EXIT rc=%d\n", errcode);
 	return errcode;
 }
 
@@ -4541,9 +4515,6 @@ static int ecam_mcu_firmware_load(struct i2c_client *client)
 {
 	uint8_t errcode = ERRCODE_SUCCESS;
 	unsigned long txt_fw_pos = 0;
-
-	cam_trace(&client->dev,
-		"ecam_mcu_firmware_load: ENTER (fw_name=%s)\n", mcu_fw_name);
 
 	/* Request firmware from the rootfs */
 	errcode = request_firmware(&mcu_fw, mcu_fw_name, &client->dev);
@@ -4556,10 +4527,6 @@ static int ecam_mcu_firmware_load(struct i2c_client *client)
 	mcu_fw_buf = kmalloc(mcu_fw->size+1, GFP_KERNEL);
 	mcu_fw_buf[mcu_fw->size] = '\0';
 	memcpy(mcu_fw_buf, mcu_fw->data, mcu_fw->size);
-
-	cam_trace(&client->dev,
-		"ecam_mcu_firmware_load: EXIT OK (size=%zu bytes)\n",
-		mcu_fw->size);
 
 mcu_fw_load_fail:
 	return errcode;
@@ -4575,8 +4542,6 @@ int8_t	ecam_specific_dt_parse(struct i2c_client *client, struct cam *priv)
 	const char *str;
 	struct device_node *node = client->dev.of_node;
 	struct device_node *ser_node;
-
-	cam_trace(&client->dev, "ecam_specific_dt_parse: ENTER\n");
 
 	errcode = of_property_read_u32(node, "camera_mipi_lanes", &mipi_lane);
 	if (errcode < ERRCODE_SUCCESS) {
@@ -4676,10 +4641,6 @@ int8_t	ecam_specific_dt_parse(struct i2c_client *client, struct cam *priv)
 	else
 		g_max_cam = 4;
 
-	cam_trace(&client->dev,
-		"ecam_specific_dt_parse: EXIT OK (mipi_lane=%d, mipi_clk=%d, sio=%c)\n",
-		priv->mipi_lane_config, priv->mipi_clk_config, priv->phy);
-
 error:
 	return errcode;
 }
@@ -4694,8 +4655,6 @@ static struct camera_common_pdata *cam_parse_dt(struct i2c_client *client)
 	struct camera_common_pdata *board_priv_pdata;
 	const struct of_device_id *match;
 	int err;
-
-	cam_trace(&client->dev, "cam_parse_dt: ENTER\n");
 
 	if (!node)
 		return NULL;
@@ -4738,7 +4697,6 @@ static struct camera_common_pdata *cam_parse_dt(struct i2c_client *client)
 	board_priv_pdata->has_eeprom =
 		of_property_read_bool(node, "has-eeprom");
 
-	cam_trace(&client->dev, "cam_parse_dt: EXIT OK\n");
 	return board_priv_pdata;
 
 error:
@@ -4943,8 +4901,6 @@ int cam_get_serial_number(struct i2c_client *client)
 	int err = ERRCODE_SUCCESS;
 	uint8_t serial_num_len = 0, loop = 0;
 
-	cam_trace(&client->dev, "cam_get_serial_number: ENTER\n");
-
 	memset(serial_num, 0x00, sizeof(serial_num));
 	memset(lens_identifier, 0x00, sizeof(lens_identifier));
 
@@ -4990,7 +4946,6 @@ int cam_get_serial_number(struct i2c_client *client)
 		return err;
 	}
 
-	cam_trace(&client->dev, "cam_get_serial_number: EXIT OK\n");
 	return ERRCODE_SUCCESS;
 }
 
@@ -5006,13 +4961,8 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	struct cam *priv;
 	uint8_t loop;
 	int8_t retry;
-	ktime_t cam_probe_t_start = ktime_get();
 
 	uint8_t spi_flash_bootdata_changed = 0;
-
-	cam_trace(&client->dev,
-		"ecam_probe: ENTER (i2c addr=0x%02x, cam_num_so_far=%d)\n",
-		client->addr, num_cam_probed);
 
 	/*
 	 * Handling Load Switch to enable power to all modules
@@ -5022,7 +4972,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		errcode = -EINVAL;
 		goto exit;
 	}
-	cam_trace(&client->dev, "step 1/17: device-tree node OK\n");
 
 	/* Allocating memories for required Data */
 	common_data = devm_kzalloc(&client->dev,
@@ -5041,7 +4990,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		errcode = -ENOMEM;
 		goto exit;
 	}
-	cam_trace(&client->dev, "step 2/17: common_data/priv allocated\n");
 
 	/* Identify the connected Device */
 	priv->cam_num = num_cam_probed;
@@ -5050,8 +4998,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 #endif
 	num_cam_probed++;
 	priv->cam_id = id->driver_data;
-	cam_trace(&client->dev,
-		"step 3/17: cam_num=%d cam_id=%d\n", priv->cam_num, priv->cam_id);
 
 #ifdef PROBE_STATUS
 	errcode = create_probe_sysfs_entries();
@@ -5074,8 +5020,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		priv->got_pwm_handle = true;
 		dev_info(&client->dev, "Got PWM for trigger\n");
 	}
-	cam_trace(&client->dev, "step 4/17: PWM trigger handle acquired=%d\n",
-		priv->got_pwm_handle);
 
 	priv->pdata = cam_parse_dt(client);
 	if (!priv->pdata) {
@@ -5083,7 +5027,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		errcode = -EFAULT;
 		goto exit;
 	}
-	cam_trace(&client->dev, "step 5/17: cam_parse_dt() OK\n");
 
 	/* Gets e-con specific data from DTB */
 	errcode = ecam_specific_dt_parse(client, priv);
@@ -5093,8 +5036,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		errcode = -EFAULT;
 		goto exit;
 	}
-	cam_trace(&client->dev,
-		"step 6/17: ecam_specific_dt_parse() OK (phy=%c)\n", priv->phy);
 
 	if (g_prev_connected_cam_id != priv->cam_id)
 		is_fw_loaded = 0;
@@ -5111,9 +5052,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 			is_fw_loaded = 1;
 		}
 	}
-	cam_trace(&client->dev,
-		"step 7/17: MCU firmware image ready (is_fw_loaded=%d)\n",
-		is_fw_loaded);
 
 	mutex_init(&g_i2c_mutex);
 
@@ -5136,12 +5074,10 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	errcode = cam_power_get(priv);
 	if (errcode)
 		goto exit;
-	cam_trace(&client->dev, "step 8/17: cam_power_get() OK\n");
 
 	errcode = cam_power_on(common_data);
 	if (errcode)
 		goto exit;
-	cam_trace(&client->dev, "step 9/17: cam_power_on() OK\n");
 
 	errcode = serdes_config_init(client, priv);
 	if (errcode < ERRCODE_SUCCESS) {
@@ -5149,9 +5085,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		errcode = -EIO;
 		goto exit;
 	}
-	cam_trace(&client->dev,
-		"step 10/17: serdes_config_init() OK (ser_reassigned_addr=0x%02x)\n",
-		priv->ser_reassigned_addr);
 
 
 
@@ -5174,7 +5107,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	errcode = toggle_mcu_reset_pin(client, priv);
 	if (errcode)
 		goto exit;
-	cam_trace(&client->dev, "step 11/17: toggle_mcu_reset_pin() OK\n");
 
 	msleep(100);
 
@@ -5189,7 +5121,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		goto exit;
 
 	}
-	cam_trace(&client->dev, "step 12/17: check_ecam_mcu_fw_status() OK\n");
 
 	/* ISP Boot data update config , by read the serial number*/
 	errcode = cam_get_serial_number(client);
@@ -5197,8 +5128,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		dev_err(&client->dev, "%s(%d):Camera serial number read failed\n",
 				__func__, __LINE__);
 	}
-	cam_trace(&client->dev,
-		"step 13/17: cam_get_serial_number() rc=%d\n", errcode);
 
 #ifdef PROBE_STATUS
 	probe_status_array[total_num_cam].percentage = 90;
@@ -5210,8 +5139,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		dev_err(&client->dev, "Error in mcu Configurations(%d)",
 			__LINE__);
 	}
-	cam_trace(&client->dev,
-		"step 14/17: mcu_configurations() rc=%d\n", errcode);
 
 	errcode = ecam_mcu_core_initialize(client, priv);
 	if (errcode < 0) {
@@ -5219,13 +5146,11 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 				__func__, __LINE__);
 		goto exit;
 	}
-	cam_trace(&client->dev, "step 15/17: ecam_mcu_core_initialize() OK\n");
 
 	if (serdes_configuration(priv, client) < 0) {
 		msleep(100);
 		dev_info(&client->dev, "serdes configuration\n");
 	}
-	cam_trace(&client->dev, "step 16/17: serdes_configuration() done\n");
 
 	/* SYSFS call for IMU read*/
 	if (priv->cam_id == Ox08B40) {
@@ -5266,8 +5191,6 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		errcode = -EFAULT;
 		goto exit;
 	}
-	cam_trace(&client->dev,
-		"step 17/17: mcu_list_fmts() OK (frm_fmt_size=%d)\n", frm_fmt_size);
 
 	common_data->ops = NULL;
 	common_data->ctrl_handler = &priv->ctrl_handler;
@@ -5301,16 +5224,12 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		dev_err(&client->dev, "Failed to initialize ecam_yuv.\n");
 		goto exit;
 	}
-	cam_trace(&client->dev, "camera_common_initialize() OK\n");
 
 	v4l2_i2c_subdev_init(priv->subdev, client, &cam_subdev_ops);
-	cam_trace(&client->dev, "v4l2_i2c_subdev_init() done\n");
 
 	errcode = cam_ctrls_init(priv, priv->mcu_ctrl_info);
 	if (errcode)
 		goto exit;
-	cam_trace(&client->dev, "cam_ctrls_init() OK (num_ctrls=%d)\n",
-		priv->num_ctrls);
 
 	priv->subdev->internal_ops = &cam_subdev_internal_ops;
 	priv->subdev->flags |=
@@ -5338,13 +5257,11 @@ static int ecam_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		dev_err(&client->dev, "unable to init media entity\n");
 		goto exit;
 	}
-	cam_trace(&client->dev, "tegra_media_entity_init() OK\n");
 #endif
 
 	errcode = v4l2_async_register_subdev(priv->subdev);
 	if (errcode)
 		goto exit;
-	cam_trace(&client->dev, "v4l2_async_register_subdev() OK\n");
 
 	if (priv->cam_id == Ox08B40)
 		dev_info(&client->dev, "Detected Ox08B40 Sensor\n");
@@ -5389,11 +5306,6 @@ exit:
 		probe_status_array[total_num_cam].percentage = -1;
 	}
 #endif
-
-	cam_trace(&client->dev,
-		"ecam_probe: EXIT rc=%d, elapsed=%lld ms\n",
-		errcode,
-		ktime_to_ms(ktime_sub(ktime_get(), cam_probe_t_start)));
 
 	return errcode;
 }
@@ -5505,6 +5417,6 @@ module_i2c_driver(cam_i2c_driver);
 /* Meta Information */
 MODULE_AUTHOR("e-con Systems");
 MODULE_DESCRIPTION("e-con's Device Driver for STURDeCAM88_CUOAGX");
-MODULE_VERSION("2.4");
+MODULE_VERSION("2.5");
 MODULE_INFO(cam_fw_version, "12OX08B40XXXX041202147f05XXXXXXX");
 MODULE_LICENSE("GPL v2");
